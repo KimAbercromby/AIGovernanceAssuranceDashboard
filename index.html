@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Assurance Dashboard</title>
+<meta name="description" content="Quarterly AI assurance dashboard for a local authority: scorecard, performance drift, incidents, AI register and Board actions.">
+<style>
+:root {
+  --navy: #122C47; --gold: #C8AB36; --ink: #1d2733; --muted: #5b6878; --line: #dde3ea;
+  --panel: #ffffff; --bg: #f4f6f9; --ok: #1f7a4d; --warn: #a86400; --bad: #b42318;
+  --ok-bg: #e8f5ee; --warn-bg: #fdf3e2; --bad-bg: #fdecea; --muted-series: #b7c2cf;
+  --radius: 8px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font-family: Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.45; }
+a { color: var(--navy); }
+.topbar { background: var(--navy); color: #fff; border-bottom: 4px solid var(--gold); }
+.topbar .in { max-width: 1180px; margin: 0 auto; padding: 18px 16px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; }
+.topbar h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: .01em; }
+.topbar .kicker { font-size: .78rem; text-transform: uppercase; letter-spacing: .1em; color: var(--gold); margin: 0 0 4px; }
+.topbar .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+button, .btn { font: inherit; font-size: .85rem; border-radius: 6px; padding: 7px 12px; cursor: pointer; border: 1px solid var(--line); background: #fff; color: var(--navy); }
+.topbar button { background: transparent; color: #fff; border-color: rgba(255,255,255,.45); }
+.topbar button:hover { border-color: var(--gold); color: var(--gold); }
+button.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
+.take { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--gold); border-radius: var(--radius); padding: 14px 18px; margin: 20px 0 6px; font-size: 1.02rem; }
+.take b { color: var(--navy); }
+.banner { margin: 10px 0 0; padding: 10px 14px; border-radius: var(--radius); font-size: .88rem; display: none; }
+.banner.warn { display: block; background: var(--warn-bg); color: #6b4000; border: 1px solid #f0d49b; }
+.banner.info { display: block; background: #eef3f9; color: var(--navy); border: 1px solid #cdd9e7; }
+.banner ul { margin: 6px 0 0; padding-left: 20px; }
+h2 { font-size: 1.15rem; color: var(--navy); margin: 30px 0 4px; padding-bottom: 4px; border-bottom: 2px solid var(--gold); display: inline-block; }
+.sub { color: var(--muted); font-size: .88rem; margin: 6px 0 12px; max-width: 60rem; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.grid.wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; position: relative; }
+.card h3 { margin: 0 0 4px; font-size: .98rem; color: var(--navy); }
+.card .note { color: var(--muted); font-size: .8rem; margin: 0 0 8px; }
+.kpi { display: flex; flex-direction: column; gap: 6px; min-height: 200px; }
+.kpi .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.kpi .lbl { font-weight: 700; font-size: .95rem; color: var(--ink); }
+.kpi .big { font-size: 2.2rem; color: var(--navy); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.kpi .big small { font-size: .95rem; color: var(--muted); margin-left: 3px; }
+.kpi .meta { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.kpi .def { font-size: .78rem; color: var(--muted); margin-top: auto; border-top: 1px dashed var(--line); padding-top: 6px; }
+.chip { display: inline-block; font-size: .74rem; padding: 2px 9px; border-radius: 999px; white-space: nowrap; text-transform: none; letter-spacing: 0; font-weight: 700; }
+.chip.ok { background: var(--ok-bg); color: var(--ok); } .chip.warn { background: var(--warn-bg); color: var(--warn); } .chip.bad { background: var(--bad-bg); color: var(--bad); } .chip.neutral { background: #eef1f5; color: var(--muted); }
+.up-good, .down-good { color: var(--ok); font-weight: 700; } .up-bad, .down-bad { color: var(--bad); font-weight: 700; }
+.chart { position: relative; min-height: 270px; }
+.mini { position: relative; min-height: 150px; }
+svg text { font-family: Arial, Helvetica, sans-serif; }
+.tip { position: absolute; pointer-events: none; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 14px rgba(18,44,71,.15); padding: 6px 10px; font-size: .78rem; display: none; z-index: 3; white-space: nowrap; }
+.tip .h { color: var(--muted); margin-bottom: 2px; }
+.tip .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.tblbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.tblbar input, .tblbar select { font: inherit; font-size: .85rem; padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
+.tblbar input { flex: 1 1 200px; }
+.tblwrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+th { text-align: left; color: var(--navy); background: #f1f4f8; padding: 8px 10px; border-bottom: 2px solid var(--line); white-space: nowrap; }
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable::after { content: " \2195"; color: var(--muted-series); }
+th[aria-sort="ascending"]::after { content: " \2191"; color: var(--navy); }
+th[aria-sort="descending"]::after { content: " \2193"; color: var(--navy); }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.key { font-weight: 700; }
+.empty { color: var(--muted); font-size: .85rem; padding: 18px; text-align: center; }
+ul.tight { margin: 0; padding-left: 18px; font-size: .86rem; }
+ul.tight li { margin-bottom: 6px; }
+/* data panel */
+dialog { border: 1px solid var(--line); border-radius: 10px; padding: 0; max-width: 760px; width: calc(100% - 32px); color: var(--ink); }
+dialog::backdrop { background: rgba(18,44,71,.45); }
+dialog .dh { background: var(--navy); color: #fff; padding: 14px 18px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-between; align-items: center; }
+dialog .dh h2 { color: #fff; border: 0; margin: 0; padding: 0; font-size: 1.05rem; }
+dialog .dh button { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+dialog .db { padding: 16px 18px 20px; font-size: .88rem; }
+.dsrow { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.dsrow:last-child { border-bottom: 0; }
+.dsrow .nm { font-weight: 700; color: var(--navy); }
+.dsrow .ds { color: var(--muted); font-size: .8rem; }
+.dsrow .acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.dsrow .src { font-size: .76rem; }
+.drop { border: 2px dashed var(--line); border-radius: 8px; padding: 14px; text-align: center; color: var(--muted); margin: 10px 0 6px; }
+.drop.over { border-color: var(--gold); background: #fffbea; }
+code { background: #eef1f5; padding: 1px 5px; border-radius: 4px; font-size: .82em; }
+footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--muted); font-size: .8rem; }
+.hide-narrow { }
+@media (max-width: 680px) { .hide-narrow { display: none; } .topbar h1 { font-size: 1.3rem; } .kpi { min-height: 0; } }
+@media print {
+  body { background: #fff; }
+  .topbar { background: #fff; color: var(--navy); border-bottom: 3px solid var(--gold); }
+  .topbar h1 { color: var(--navy); }
+  .topbar .btns, .tblbar, .noprint, dialog { display: none !important; }
+  .card { break-inside: avoid; }
+  h2 { break-after: avoid; }
+  .grid { grid-template-columns: repeat(3, 1fr); }
+  .grid.wide { grid-template-columns: repeat(2, 1fr); }
+  .chart, .mini { min-height: 0; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="in">
+    <div>
+      <p class="kicker" id="periodLabel">Quarterly AI assurance review</p>
+      <h1>Is AI governance working?</h1>
+    </div>
+    <div class="btns">
+      <button type="button" id="openData">Load your data</button>
+      <button type="button" id="printBtn">Print Board report</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="take" id="takeaway">Loading…</div>
+  <div class="banner" id="dataBanner"></div>
+  <div class="banner" id="checkBanner"></div>
+
+  <section id="scorecard">
+    <h2>Scorecard</h2>
+    <p class="sub">One measure per assurance domain: register, controls, performance, incidents and suppliers. Each shows the latest value against its target and the change since the previous period. Only a missed target is flagged red.</p>
+    <div class="grid" id="kpiGrid"></div>
+  </section>
+
+  <section id="performance">
+    <h2>Performance: where the AI is least reliable</h2>
+    <p class="sub">Staff edit rate is the share of AI outputs that staff correct before saving. A rising rate is the earliest warning that a tool is getting things wrong. The team with the highest latest rate is highlighted.</p>
+    <div class="card">
+      <h3 id="editTitle">Staff edit rate by team</h3>
+      <p class="note" id="editNote">Dashed line is the tolerance agreed at approval.</p>
+      <div class="chart" id="editChart"></div>
+    </div>
+  </section>
+
+  <section id="incidents">
+    <h2>Incidents and early warnings</h2>
+    <p class="sub">Read these together. Rising near misses and shadow AI finds usually mean people are reporting and detection is working. Breaches are the measure that should fall.</p>
+    <div class="grid">
+      <div class="card"><h3>Accuracy complaints</h3><p class="note">Residents reporting an AI output was wrong</p><div class="mini" id="m_complaints_accuracy"></div></div>
+      <div class="card"><h3>Near misses reported</h3><p class="note">Caught before harm. Up is healthy.</p><div class="mini" id="m_near_misses"></div></div>
+      <div class="card"><h3>Shadow AI tools found</h3><p class="note">Unapproved tools detected. Up shows detection works.</p><div class="mini" id="m_shadow_ai_found"></div></div>
+      <div class="card"><h3>Data breaches involving AI</h3><p class="note">Reported to the DPO. Should trend to zero.</p><div class="mini" id="m_breaches"></div></div>
+    </div>
+  </section>
+
+  <section id="register">
+    <h2>AI register</h2>
+    <p class="sub">Every AI system in use. Review status is worked out from the review due date: <b>Overdue</b> once the date has passed, <b>Due soon</b> within 60 days.</p>
+    <div class="card">
+      <div class="tblbar">
+        <input type="search" id="regSearch" placeholder="Search systems, services, owners…" aria-label="Search the register">
+        <select id="regFilter" aria-label="Filter by review status">
+          <option value="">All review statuses</option>
+          <option>Overdue</option><option>Due soon</option><option>On track</option>
+        </select>
+        <button type="button" id="regExport">Download register CSV</button>
+      </div>
+      <div class="tblwrap"><table id="regTable"></table></div>
+    </div>
+  </section>
+
+  <section id="actions">
+    <h2>Actions to the Information Governance Board</h2>
+    <p class="sub">Each finding becomes a specific, owned, dated action. This is what shows governance changes things. Open actions past their due date are flagged.</p>
+    <div class="card"><div class="tblwrap"><table id="actTable"></table></div></div>
+  </section>
+
+  <section id="reading">
+    <h2>How to read success</h2>
+    <div class="grid wide" style="margin-top:10px">
+      <div class="card"><h3>Is the process running?</h3>
+        <ul class="tight"><li>Register coverage and owners assigned</li><li>Reviews on time, DPIAs before go-live</li><li>Approval time: governance should be fast, not a blocker</li></ul></div>
+      <div class="card"><h3>Is it preventing harm?</h3>
+        <ul class="tight"><li>Breaches and serious complaints falling</li><li>Incidents closed within the service standard</li><li>Actions from findings completed on time</li></ul></div>
+      <div class="card"><h3>Traps to avoid</h3>
+        <ul class="tight"><li>Zero overrides is a warning, not success: staff may be rubber-stamping the AI</li><li>Fewer shadow AI finds only counts once detection is mature</li><li>A green dashboard with no actions means nobody is looking</li></ul></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p id="footSrc">Showing illustrative sample data for a fictional local authority. Use <b>Load your data</b> to view your own CSV files. Files are read in your browser only and are not uploaded anywhere.</p>
+</footer>
+
+<dialog id="dataDlg" aria-labelledby="dlgTitle">
+  <div class="dh"><h2 id="dlgTitle">Load your data</h2><button type="button" id="closeDlg">Close</button></div>
+  <div class="db">
+    <p style="margin-top:0">The dashboard reads five CSV files. Download a template, fill it in (Excel or Google Sheets, saved as CSV), then load it here. You can drop several files at once if they keep the template file names.</p>
+    <div class="drop" id="dropZone">Drop CSV files here, or use <b>Load</b> on each row.</div>
+    <div id="dsList"></div>
+    <p style="margin-bottom:0"><button type="button" id="resetAll">Reset to sample data</button></p>
+  </div>
+</dialog>
+<input type="file" id="fileIn" accept=".csv,text/csv" hidden>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Sample data (illustrative, fictional local authority) ---------- */
+  var SAMPLE = {
+    kpis: 'id,domain,kpi,value,previous,target,unit,better,definition\n' +
+      'register_coverage,Register,Systems with a named owner and risk tier,92,75,90,%,higher,"Share of known AI systems in the register with an accountable owner and a risk tier assigned."\n' +
+      'reviews_on_time,Register,Annual reviews not overdue,75,83,100,%,higher,"Share of registered systems whose annual review has not passed its due date."\n' +
+      'dpia_complete,Control,High-risk systems with a signed-off DPIA,83,67,100,%,higher,"Share of high-risk systems with a DPIA signed off by the DPO before go-live."\n' +
+      'approval_days,Control,Median days from request to approval,18,26,20,days,lower,"Working days from a service submitting an AI use request to a governance decision. Speed shows governance is not a blocker."\n' +
+      'edit_rate,Performance,Staff edit rate on AI call summaries,7.1,5.4,5,%,lower,"Share of AI-drafted call summaries that staff materially edit before saving. A proxy for accuracy."\n' +
+      'incident_sla,Incident,AI incidents closed within 20 working days,92,80,90,%,higher,"Share of AI complaints, near misses and breaches investigated and closed within the service standard."\n' +
+      'shadow_resolved,Incident,Shadow AI finds resolved within 30 days,86,60,80,%,higher,"Share of unapproved AI tools detected that were either brought into the register or switched off within 30 days."\n' +
+      'supplier_current,Supplier,Suppliers with current assurance evidence,83,75,100,%,higher,"Share of AI suppliers with in-date certification (e.g. ISO 27001 or 42001), audit report and contract compliance check."\n',
+    register: 'system,service,risk_tier,owner,next_review,dpia,supplier_evidence\n' +
+      'Call summary assistant,Customer Services,High,Head of Customer Services,2026-09-15,Signed off,Current\n' +
+      'Housing repairs chatbot,Housing,High,Housing Operations Manager,2026-08-01,Signed off,Expired\n' +
+      'Copilot for Microsoft 365,Corporate IT,Medium,Head of Digital,2026-07-30,Signed off,Current\n' +
+      'Benefits document checker,Revenues & Benefits,High,Benefits Manager,2026-11-20,Signed off,Current\n' +
+      'Meeting transcription,Democratic Services,Medium,Democratic Services Manager,2026-12-01,Signed off,Current\n' +
+      'Social care case note drafting,Adult Social Care,High,Principal Social Worker,2027-03-10,In progress,Current\n' +
+      'Planning application summariser,Planning,Medium,Development Management Lead,2027-01-12,Signed off,Current\n' +
+      'Website translation service,Customer Services,Medium,Head of Customer Services,2027-02-02,Signed off,Current\n' +
+      'Fraud risk scoring,Revenues & Benefits,High,Counter Fraud Manager,2027-05-01,Signed off,Current\n' +
+      'Recruitment CV screening,HR,High,Head of HR,2027-06-01,Signed off,Current\n' +
+      'Pothole detection (dashcam),Highways,Low,Highways Asset Manager,2027-04-15,Not required,Expired\n' +
+      'Waste route optimiser,Environment,Low,Waste Services Manager,2027-01-20,Not required,Current\n',
+    edit_rates: 'period,team,edit_rate\n' +
+      'Q4 2025,Housing,9.0\nQ1 2026,Housing,11.0\nQ2 2026,Housing,14.0\nQ3 2026,Housing,18.0\n' +
+      'Q4 2025,Revenues & Benefits,5.5\nQ1 2026,Revenues & Benefits,5.2\nQ2 2026,Revenues & Benefits,5.0\nQ3 2026,Revenues & Benefits,4.8\n' +
+      'Q4 2025,Adult Social Care,6.0\nQ1 2026,Adult Social Care,5.8\nQ2 2026,Adult Social Care,5.6\nQ3 2026,Adult Social Care,5.3\n' +
+      'Q4 2025,Customer Services,4.8\nQ1 2026,Customer Services,4.9\nQ2 2026,Customer Services,4.6\nQ3 2026,Customer Services,4.5\n',
+    incidents: 'period,complaints_accuracy,near_misses,breaches,shadow_ai_found\n' +
+      'Q4 2025,5,2,1,1\nQ1 2026,6,4,1,3\nQ2 2026,6,7,0,4\nQ3 2026,12,9,0,7\n',
+    actions: 'ref,action,finding,owner,due,status\n' +
+      'A1,Make human review mandatory for all Housing call summaries,Housing edit rate 18% against a 5% tolerance; accuracy complaints doubled,Head of Customer Services,2026-10-31,In progress\n' +
+      'A2,Add staff edit rate as a standing KPI for every generative AI tool,Edit rate is the earliest warning of accuracy drift,AI Governance Lead,2026-11-30,Not started\n' +
+      'A3,Require supplier accuracy testing on distressed-caller samples before the model update goes live,Supplier has announced a model update; other councils report similar errors,Procurement and Contracts Lead,2026-11-15,Not started\n' +
+      'A4,Send automatic reminders to owners 60 days before reviews fall due,3 of 12 systems overdue annual review,AI Governance Lead,2026-10-24,Done\n' +
+      'A5,Report findings to the Information Governance Board with a risk rating,Quarterly assurance review cycle,AI Governance Lead,2026-11-05,In progress\n'
+  };
+
+  var DATASETS = [
+    { id: 'kpis', file: 'assurance_kpis.csv', name: 'Assurance scorecard', desc: 'One row per measure: this period, previous period, target, unit, and whether higher or lower is better.',
+      required: ['id', 'domain', 'kpi', 'value', 'previous', 'target', 'unit', 'better'] },
+    { id: 'register', file: 'ai_register.csv', name: 'AI register', desc: 'One row per AI system: service, risk tier, owner, review due date, DPIA and supplier evidence status.',
+      required: ['system', 'service', 'risk_tier', 'owner', 'next_review', 'dpia', 'supplier_evidence'] },
+    { id: 'edit_rates', file: 'edit_rates.csv', name: 'Staff edit rates', desc: 'One row per period and team: the % of AI outputs staff edited.',
+      required: ['period', 'team', 'edit_rate'] },
+    { id: 'incidents', file: 'incidents.csv', name: 'Incidents by period', desc: 'One row per period: accuracy complaints, near misses, breaches, shadow AI finds.',
+      required: ['period', 'complaints_accuracy', 'near_misses', 'breaches', 'shadow_ai_found'] },
+    { id: 'actions', file: 'actions.csv', name: 'Board action log', desc: 'One row per action: ref, action, finding, owner, due date, status.',
+      required: ['ref', 'action', 'finding', 'owner', 'due', 'status'] }
+  ];
+
+  var STORE_KEY = 'aiAssuranceDashboard.v1';
+  var DUE_SOON_DAYS = 60;
+
+  /* ---------- Helpers ---------- */
+  function parseCSV(text) {
+    text = String(text).replace(/^﻿/, '');
+    var rows = [], row = [], field = '', i = 0, q = false;
+    while (i < text.length) {
+      var c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+        else field += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(field); field = '';
+        if (row.length > 1 || row[0] !== '') rows.push(row);
+        row = [];
+      } else field += c;
+      i++;
+    }
+    if (field !== '' || row.length) { row.push(field); if (row.length > 1 || row[0] !== '') rows.push(row); }
+    if (!rows.length) return { columns: [], rows: [] };
+    var cols = rows[0].map(function (h) { return h.trim().toLowerCase().replace(/\s+/g, '_'); });
+    var out = rows.slice(1).map(function (r) {
+      var o = {}; cols.forEach(function (h, j) { o[h] = (r[j] == null ? '' : String(r[j]).trim()); }); return o;
+    });
+    return { columns: cols, rows: out };
+  }
+  function csvCell(v) {
+    v = v == null ? '' : String(v);
+    if (/^[=+\-@]/.test(v)) v = "'" + v;
+    return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  function toCSV(cols, rows) {
+    return '﻿' + [cols.map(csvCell).join(',')].concat(rows.map(function (r) { return cols.map(function (c) { return csvCell(r[c]); }).join(','); })).join('\r\n') + '\r\n';
+  }
+  function download(name, text) {
+    var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function el(tag, attrs, text) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) { if (k === 'class') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); });
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(SVGNS, tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function num(v) { var n = parseFloat(String(v).replace(/[%,\s]/g, '')); return isNaN(n) ? null : n; }
+  function fmt(n) { if (n == null) return '–'; return (Math.round(n * 10) / 10).toLocaleString('en-GB', { maximumFractionDigits: 1 }); }
+  function parseDate(s) {
+    s = String(s || '').trim(); if (!s) return null;
+    var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    m = s.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})/); // UK dd/mm/yyyy
+    if (m) return new Date(Date.UTC(+m[3], +m[2] - 1, +m[1]));
+    var d = new Date(s); return isNaN(d) ? null : d;
+  }
+  function fmtDate(d) { return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '–'; }
+  function today() { var n = new Date(); return new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())); }
+  function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
+  function store(get, val) {
+    try {
+      if (get) { var s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; }
+      localStorage.setItem(STORE_KEY, JSON.stringify(val));
+    } catch (e) { return null; }
+  }
+
+  /* ---------- State ---------- */
+  var state = { data: {}, source: {} };
+  function loadAll() {
+    var saved = store(true) || {};
+    DATASETS.forEach(function (d) {
+      var s = saved[d.id];
+      if (s && s.text) { state.data[d.id] = parseCSV(s.text); state.source[d.id] = { kind: 'yours', name: s.name, at: s.at }; }
+      else { state.data[d.id] = parseCSV(SAMPLE[d.id]); state.source[d.id] = { kind: 'sample' }; }
+    });
+  }
+  function saveDataset(id, name, text) {
+    var saved = store(true) || {};
+    saved[id] = { name: name, text: text, at: new Date().toISOString() };
+    store(false, saved);
+  }
+  function resetDataset(id) {
+    var saved = store(true) || {}; delete saved[id]; store(false, saved);
+  }
+  function validate(ds, parsed) {
+    var missing = ds.required.filter(function (c) { return parsed.columns.indexOf(c) === -1; });
+    if (missing.length) return 'Missing column' + (missing.length > 1 ? 's' : '') + ': ' + missing.join(', ') + '. Download the template to see the expected headers.';
+    if (!parsed.rows.length) return 'The file has headers but no rows.';
+    return null;
+  }
+
+  /* ---------- Derived ---------- */
+  function registerRows() {
+    var t = today();
+    return state.data.register.rows.map(function (r) {
+      var d = parseDate(r.next_review), status = 'No date', days = null;
+      if (d) { days = daysBetween(t, d); status = days < 0 ? 'Overdue' : days <= DUE_SOON_DAYS ? 'Due soon' : 'On track'; }
+      var o = Object.assign({}, r); o._due = d; o._days = days; o.review_status = status; return o;
+    });
+  }
+  function kpiMet(k) {
+    var v = num(k.value), t = num(k.target); if (v == null || t == null) return null;
+    return String(k.better).toLowerCase() === 'lower' ? v <= t : v >= t;
+  }
+
+  /* ---------- Render: header & checks ---------- */
+  function renderHeader(reg) {
+    var kpis = state.data.kpis.rows;
+    var judged = kpis.filter(function (k) { return kpiMet(k) !== null; });
+    var off = judged.filter(function (k) { return kpiMet(k) === false; });
+    var overdue = reg.filter(function (r) { return r.review_status === 'Overdue'; }).length;
+    var er = editSummary();
+    var t = document.getElementById('takeaway'); t.textContent = '';
+    t.appendChild(el('b', null, String(off.length)));
+    t.appendChild(document.createTextNode(' of ' + judged.length + ' assurance measures are off target'));
+    t.appendChild(document.createTextNode(', and '));
+    t.appendChild(el('b', null, String(overdue)));
+    t.appendChild(document.createTextNode(' of ' + reg.length + ' AI systems are overdue their review.'));
+    if (er && er.worst && er.tol != null && er.worst.v > er.tol) {
+      t.appendChild(document.createTextNode(' Biggest performance risk: '));
+      t.appendChild(el('b', null, er.worst.team));
+      t.appendChild(document.createTextNode(' edit rate is ' + fmt(er.worst.v) + '% against a ' + fmt(er.tol) + '% tolerance.'));
+    }
+    var per = er && er.periods.length ? er.periods[er.periods.length - 1] : (state.data.incidents.rows.length ? state.data.incidents.rows[state.data.incidents.rows.length - 1].period : '');
+    document.getElementById('periodLabel').textContent = 'Quarterly AI assurance review' + (per ? ' · ' + per : '');
+
+    // data source banner
+    var mine = DATASETS.filter(function (d) { return state.source[d.id].kind === 'yours'; });
+    var b = document.getElementById('dataBanner');
+    b.className = 'banner'; b.textContent = '';
+    if (mine.length && mine.length < DATASETS.length) {
+      b.className = 'banner info';
+      b.textContent = 'Mixed data: ' + mine.map(function (d) { return d.name; }).join(', ') + ' from your files; the rest is still sample data.';
+    }
+    document.getElementById('footSrc').style.display = mine.length === DATASETS.length ? 'none' : '';
+
+    // consistency check: register vs KPI return
+    var checks = [];
+    function kv(id) { var k = kpis.filter(function (x) { return x.id === id; })[0]; return k ? num(k.value) : null; }
+    if (reg.length) {
+      var onTime = Math.round(reg.filter(function (r) { return r.review_status !== 'Overdue'; }).length / reg.length * 100);
+      var hr = reg.filter(function (r) { return /high|critical/i.test(r.risk_tier); });
+      var dp = hr.length ? Math.round(hr.filter(function (r) { return /signed/i.test(r.dpia); }).length / hr.length * 100) : null;
+      var sup = Math.round(reg.filter(function (r) { return /current/i.test(r.supplier_evidence); }).length / reg.length * 100);
+      [['reviews_on_time', 'Annual reviews not overdue', onTime], ['dpia_complete', 'High-risk systems with a signed-off DPIA', dp], ['supplier_current', 'Suppliers with current assurance evidence', sup]].forEach(function (c) {
+        var reported = kv(c[0]);
+        if (reported != null && c[2] != null && Math.abs(reported - c[2]) > 1) checks.push(c[1] + ': scorecard says ' + fmt(reported) + '%, the register today gives ' + c[2] + '%.');
+      });
+    }
+    var cb = document.getElementById('checkBanner'); cb.className = 'banner'; cb.textContent = '';
+    if (checks.length) {
+      cb.className = 'banner warn';
+      cb.appendChild(el('b', null, 'Consistency check: the scorecard and the register disagree.'));
+      cb.appendChild(document.createTextNode(' This can be timing (dates have passed since the return) or a data error. Check before reporting.'));
+      var ul = el('ul'); checks.forEach(function (c) { ul.appendChild(el('li', null, c)); }); cb.appendChild(ul);
+    }
+  }
+
+  /* ---------- Render: scorecard ---------- */
+  function renderKPIs() {
+    var g = document.getElementById('kpiGrid'); g.textContent = '';
+    var rows = state.data.kpis.rows;
+    if (!rows.length) { g.appendChild(el('div', { class: 'empty' }, 'No measures loaded.')); return; }
+    rows.forEach(function (k) {
+      var v = num(k.value), p = num(k.previous), t = num(k.target), lower = String(k.better).toLowerCase() === 'lower';
+      var met = kpiMet(k), pct = k.unit === '%';
+      var card = el('div', { class: 'card kpi', id: 'kpi-' + k.id });
+      var top = el('div', { class: 'top' }); top.appendChild(el('span', null, k.domain));
+      top.appendChild(el('span', { class: 'chip ' + (met === null ? 'neutral' : met ? 'ok' : 'bad') }, met === null ? 'No target' : met ? 'On target' : 'Off target'));
+      card.appendChild(top);
+      card.appendChild(el('div', { class: 'lbl' }, k.kpi));
+      var big = el('div', { class: 'big' }, fmt(v)); big.appendChild(el('small', null, pct ? '%' : (k.unit || ''))); card.appendChild(big);
+      var meta = el('div', { class: 'meta' });
+      if (v != null && p != null) {
+        var ch = Math.round((v - p) * 10) / 10, good = lower ? ch < 0 : ch > 0;
+        var s = el('span', { class: ch === 0 ? '' : (good ? 'up-good' : 'up-bad') }, (ch > 0 ? '+' : ch < 0 ? '−' : '±') + fmt(Math.abs(ch)) + (pct ? ' pts' : ' ' + (k.unit || '')));
+        meta.appendChild(s); meta.appendChild(document.createTextNode(' vs previous'));
+      }
+      if (t != null) meta.appendChild(document.createTextNode((meta.childNodes.length ? ' · ' : '') + 'target ' + (lower ? '≤ ' : '≥ ') + fmt(t) + (pct ? '%' : ' ' + (k.unit || ''))));
+      card.appendChild(meta);
+      if (k.definition) card.appendChild(el('div', { class: 'def' }, k.definition));
+      g.appendChild(card);
+    });
+  }
+
+  /* ---------- Render: edit-rate chart ---------- */
+  function editSummary() {
+    var rows = state.data.edit_rates.rows.map(function (r) { return { p: r.period, team: r.team, v: num(r.edit_rate) }; }).filter(function (r) { return r.v != null; });
+    if (!rows.length) return null;
+    var periods = [], teams = [];
+    rows.forEach(function (r) { if (periods.indexOf(r.p) === -1) periods.push(r.p); if (teams.indexOf(r.team) === -1) teams.push(r.team); });
+    var last = periods[periods.length - 1];
+    var latest = rows.filter(function (r) { return r.p === last; }).sort(function (a, b) { return b.v - a.v; });
+    var k = state.data.kpis.rows.filter(function (x) { return x.id === 'edit_rate'; })[0];
+    return { rows: rows, periods: periods, teams: teams, last: last, worst: latest[0], tol: k ? num(k.target) : null };
+  }
+  function renderEditChart() {
+    var box = document.getElementById('editChart'); box.textContent = '';
+    var s = editSummary();
+    if (!s) { box.appendChild(el('div', { class: 'empty' }, 'No edit-rate data loaded.')); return; }
+    var focus = s.worst.team;
+    document.getElementById('editNote').textContent = s.tol != null ? 'Dashed line is the ' + fmt(s.tol) + '% tolerance from the scorecard target.' : 'Add an edit_rate measure to the scorecard to show a tolerance line.';
+    var W = Math.max(300, box.clientWidth || 700), H = 270, mt = 14, mb = 30;
+    var svg = sv('svg', { width: '100%', viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Staff edit rate by team over time' });
+    box.appendChild(svg);
+    var maxV = Math.max.apply(null, s.rows.map(function (r) { return r.v; }).concat([s.tol || 0]));
+    var top = Math.max(5, Math.ceil(maxV / 5) * 5), step = top <= 10 ? 2 : top <= 25 ? 5 : 10, ticks = [];
+    for (var tv = 0; tv <= top; tv += step) ticks.push(tv);
+    var probe = sv('text', { 'font-size': 12 }); svg.appendChild(probe);
+    function tw(t) { probe.textContent = t; return probe.getComputedTextLength(); }
+    var focusLbl = focus + ' ' + fmt(s.worst.v) + '%', otherLbl = 'Other teams';
+    var ml = Math.max.apply(null, ticks.map(function (t) { return tw(t + '%'); })) + 10;
+    var mr = Math.min(W * 0.4, Math.max(tw(focusLbl), tw(otherLbl)) + 14);
+    svg.removeChild(probe);
+    var n = s.periods.length;
+    function x(p) { var i = s.periods.indexOf(p); return n === 1 ? (ml + W - mr) / 2 : ml + 12 + i * ((W - mr - ml - 24) / (n - 1)); }
+    function y(v) { return H - mb - (v / top) * (H - mb - mt); }
+    ticks.forEach(function (t) {
+      svg.appendChild(sv('line', { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: '#e6ebf1' }));
+      svg.appendChild(sv('text', { x: ml - 8, y: y(t), dy: '0.32em', 'text-anchor': 'end', 'font-size': 12, fill: '#5b6878' }, t + '%'));
+    });
+    svg.appendChild(sv('line', { x1: ml, x2: W - mr, y1: y(0), y2: y(0), stroke: '#9aa7b6' }));
+    var narrow = W < 460;
+    s.periods.forEach(function (p, i) {
+      if (narrow && n > 6 && i % 2 && i !== n - 1) return;
+      svg.appendChild(sv('text', { x: x(p), y: H - 10, 'text-anchor': 'middle', 'font-size': 12, fill: '#5b6878' }, narrow ? p.replace(/ 20(\d\d)$/, " '$1") : p));
+    });
+    if (s.tol != null) svg.appendChild(sv('line', { x1: ml, x2: W - mr, y1: y(s.tol), y2: y(s.tol), stroke: '#C8AB36', 'stroke-width': 2, 'stroke-dasharray': '6 5' }));
+    function path(team) {
+      return s.rows.filter(function (r) { return r.team === team; }).map(function (r, i) { return (i ? 'L' : 'M') + x(r.p).toFixed(1) + ',' + y(r.v).toFixed(1); }).join('');
+    }
+    s.teams.filter(function (t) { return t !== focus; }).forEach(function (t) {
+      svg.appendChild(sv('path', { d: path(t), fill: 'none', stroke: '#b7c2cf', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+    });
+    svg.appendChild(sv('path', { d: path(focus), fill: 'none', stroke: '#b42318', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+    s.rows.filter(function (r) { return r.team === focus; }).forEach(function (r) { svg.appendChild(sv('circle', { cx: x(r.p), cy: y(r.v), r: 4, fill: '#b42318' })); });
+    var fy = y(s.worst.v);
+    svg.appendChild(sv('text', { x: x(s.last) + 9, y: fy, dy: '0.32em', 'font-size': 12, 'font-weight': 700, fill: '#b42318' }, focusLbl));
+    var others = s.rows.filter(function (r) { return r.p === s.last && r.team !== focus; });
+    if (others.length) {
+      var oy = y(others.reduce(function (a, r) { return a + r.v; }, 0) / others.length);
+      if (Math.abs(oy - fy) < 16) oy = fy + 16;
+      svg.appendChild(sv('text', { x: x(s.last) + 9, y: oy, dy: '0.32em', 'font-size': 12, fill: '#5b6878' }, otherLbl));
+    }
+    // tooltip
+    var tip = el('div', { class: 'tip' }); box.appendChild(tip);
+    var rule = sv('line', { y1: mt, y2: H - mb, stroke: '#9aa7b6', visibility: 'hidden' }); svg.appendChild(rule);
+    var hit = sv('rect', { x: ml, y: 0, width: Math.max(0, W - mr - ml), height: H, fill: 'transparent' }); svg.appendChild(hit);
+    function move(ev) {
+      var r = svg.getBoundingClientRect(), mx = (ev.clientX - r.left) * (W / r.width);
+      var p = s.periods.reduce(function (a, b) { return Math.abs(x(b) - mx) < Math.abs(x(a) - mx) ? b : a; });
+      rule.setAttribute('x1', x(p)); rule.setAttribute('x2', x(p)); rule.setAttribute('visibility', 'visible');
+      tip.textContent = ''; tip.appendChild(el('div', { class: 'h' }, p));
+      s.rows.filter(function (q) { return q.p === p; }).sort(function (a, b) { return b.v - a.v; }).forEach(function (q) {
+        var ln = el('div'); var sw = el('span', { class: 'sw' }); sw.style.background = q.team === focus ? '#b42318' : '#b7c2cf';
+        ln.appendChild(sw); ln.appendChild(document.createTextNode(q.team + '  ' + fmt(q.v) + '%')); tip.appendChild(ln);
+      });
+      tip.style.display = 'block';
+      var px = x(p) / W * r.width, bw = box.clientWidth, w = tip.offsetWidth;
+      tip.style.left = (px + 12 + w > bw ? Math.max(0, px - w - 12) : px + 12) + 'px'; tip.style.top = '6px';
+    }
+    hit.addEventListener('mousemove', move);
+    hit.addEventListener('mouseleave', function () { tip.style.display = 'none'; rule.setAttribute('visibility', 'hidden'); });
+  }
+
+  /* ---------- Render: incident minis ---------- */
+  function renderMini(field, color) {
+    var box = document.getElementById('m_' + field); box.textContent = '';
+    var rows = state.data.incidents.rows.map(function (r) { return { p: r.period, v: num(r[field]) }; }).filter(function (r) { return r.v != null; });
+    if (!rows.length) { box.appendChild(el('div', { class: 'empty' }, 'No data.')); return; }
+    rows = rows.slice(-8);
+    var W = Math.max(220, box.clientWidth || 260), H = 150, mt = 18, mb = 22;
+    var svg = sv('svg', { width: '100%', viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': field.replace(/_/g, ' ') + ' by period' });
+    box.appendChild(svg);
+    var max = Math.max(1, Math.max.apply(null, rows.map(function (r) { return r.v; })));
+    var band = (W - 8) / rows.length, bw = Math.min(32, band * 0.6);
+    rows.forEach(function (r, i) {
+      var cx = 4 + band * i + band / 2, h = (r.v / max) * (H - mt - mb), yy = H - mb - h;
+      svg.appendChild(sv('rect', { x: cx - bw / 2, y: yy, width: bw, height: Math.max(0, h), rx: 4, fill: i === rows.length - 1 ? color : '#c9d3de' }));
+      svg.appendChild(sv('text', { x: cx, y: yy - 5, 'text-anchor': 'middle', 'font-size': 12, fill: '#1d2733' }, String(r.v)));
+      svg.appendChild(sv('text', { x: cx, y: H - 6, 'text-anchor': 'middle', 'font-size': 11, fill: '#5b6878' }, String(r.p).replace(/ 20(\d\d)$/, " '$1")));
+    });
+    svg.appendChild(sv('line', { x1: 4, x2: W - 4, y1: H - mb, y2: H - mb, stroke: '#9aa7b6' }));
+  }
+
+  /* ---------- Render: tables ---------- */
+  var CHIP = { 'Overdue': 'bad', 'Expired': 'bad', 'Critical': 'bad', 'High': 'bad', 'Due soon': 'warn', 'In progress': 'warn', 'Not started': 'warn', 'Medium': 'warn', 'Late': 'bad', 'No date': 'neutral' };
+  function chip(v) { return el('span', { class: 'chip ' + (CHIP[v] || 'ok') }, v || '–'); }
+  var regSort = { col: 'review_status', dir: 1 };
+  var REG_COLS = [
+    { k: 'system', h: 'System', key: true }, { k: 'service', h: 'Service', narrow: true }, { k: 'risk_tier', h: 'Risk', chip: true },
+    { k: 'owner', h: 'Owner', narrow: true }, { k: 'next_review', h: 'Review due', date: true }, { k: 'review_status', h: 'Review', chip: true },
+    { k: 'dpia', h: 'DPIA', chip: true }, { k: 'supplier_evidence', h: 'Supplier evidence', chip: true }
+  ];
+  var RANK = { review_status: { 'Overdue': 0, 'Due soon': 1, 'No date': 2, 'On track': 3 }, risk_tier: { 'Critical': 0, 'High': 1, 'Medium': 2, 'Low': 3 } };
+  function renderRegister(reg) {
+    var tbl = document.getElementById('regTable'); tbl.textContent = '';
+    var q = document.getElementById('regSearch').value.trim().toLowerCase(), f = document.getElementById('regFilter').value;
+    var rows = reg.filter(function (r) {
+      if (f && r.review_status !== f) return false;
+      if (!q) return true;
+      return REG_COLS.some(function (c) { return String(r[c.k] || '').toLowerCase().indexOf(q) !== -1; });
+    });
+    rows.sort(function (a, b) {
+      var c = regSort.col, av, bv;
+      if (c === 'next_review') { av = a._due ? +a._due : Infinity; bv = b._due ? +b._due : Infinity; }
+      else if (RANK[c]) { av = RANK[c][a[c]] != null ? RANK[c][a[c]] : 9; bv = RANK[c][b[c]] != null ? RANK[c][b[c]] : 9; }
+      else { av = String(a[c] || '').toLowerCase(); bv = String(b[c] || '').toLowerCase(); }
+      var r = av < bv ? -1 : av > bv ? 1 : 0;
+      if (r === 0 && c !== 'next_review') r = (a._due ? +a._due : Infinity) - (b._due ? +b._due : Infinity);
+      return r * regSort.dir;
+    });
+    var thead = el('thead'), tr = el('tr');
+    REG_COLS.forEach(function (c) {
+      var th = el('th', { class: 'sortable' + (c.narrow ? ' hide-narrow' : ''), scope: 'col', tabindex: '0' }, c.h);
+      if (regSort.col === c.k) th.setAttribute('aria-sort', regSort.dir === 1 ? 'ascending' : 'descending');
+      function go() { regSort = { col: c.k, dir: regSort.col === c.k ? -regSort.dir : 1 }; renderRegister(registerRows()); }
+      th.addEventListener('click', go); th.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      tr.appendChild(th);
+    });
+    thead.appendChild(tr); tbl.appendChild(thead);
+    var tb = el('tbody');
+    if (!rows.length) { var etr = el('tr'), etd = el('td', { colspan: REG_COLS.length, class: 'empty' }, 'No systems match.'); etr.appendChild(etd); tb.appendChild(etr); }
+    rows.forEach(function (r) {
+      var row = el('tr');
+      REG_COLS.forEach(function (c) {
+        var td = el('td', { class: (c.key ? 'key' : '') + (c.narrow ? ' hide-narrow' : '') });
+        if (c.chip) td.appendChild(chip(r[c.k]));
+        else if (c.date) {
+          td.textContent = fmtDate(r._due);
+          if (r._days != null && r._days < 0) td.appendChild(el('div', { class: 'note', style: 'color:#b42318;font-size:.75rem' }, Math.abs(r._days) + ' days overdue'));
+          else if (r._days != null && r._days <= DUE_SOON_DAYS) td.appendChild(el('div', { style: 'color:#a86400;font-size:.75rem' }, 'in ' + r._days + ' days'));
+        } else td.textContent = r[c.k] || '–';
+        row.appendChild(td);
+      });
+      tb.appendChild(row);
+    });
+    tbl.appendChild(tb);
+  }
+  function renderActions() {
+    var tbl = document.getElementById('actTable'); tbl.textContent = '';
+    var cols = [{ k: 'ref', h: 'Ref' }, { k: 'action', h: 'Action' }, { k: 'finding', h: 'Finding', narrow: true }, { k: 'owner', h: 'Owner' }, { k: 'due', h: 'Due' }, { k: 'status', h: 'Status' }];
+    var thead = el('thead'), tr = el('tr');
+    cols.forEach(function (c) { tr.appendChild(el('th', { scope: 'col', class: c.narrow ? 'hide-narrow' : '' }, c.h)); });
+    thead.appendChild(tr); tbl.appendChild(thead);
+    var tb = el('tbody'), t = today();
+    state.data.actions.rows.forEach(function (r) {
+      var row = el('tr'), due = parseDate(r.due), done = /done|complete|closed/i.test(r.status);
+      var late = !done && due && due < t;
+      cols.forEach(function (c) {
+        var td = el('td', { class: (c.k === 'ref' ? 'key' : '') + (c.narrow ? ' hide-narrow' : '') });
+        if (c.k === 'status') { td.appendChild(chip(r.status)); if (late) { td.appendChild(document.createTextNode(' ')); td.appendChild(chip('Late')); } }
+        else if (c.k === 'due') td.textContent = fmtDate(due);
+        else td.textContent = r[c.k] || '–';
+        row.appendChild(td);
+      });
+      tb.appendChild(row);
+    });
+    if (!state.data.actions.rows.length) { var etr = el('tr'); etr.appendChild(el('td', { colspan: cols.length, class: 'empty' }, 'No actions loaded.')); tb.appendChild(etr); }
+    tbl.appendChild(tb);
+  }
+
+  function renderAll() {
+    var reg = registerRows();
+    renderHeader(reg);
+    renderKPIs();
+    renderEditChart();
+    renderMini('complaints_accuracy', '#b42318');
+    renderMini('near_misses', '#122C47');
+    renderMini('shadow_ai_found', '#122C47');
+    renderMini('breaches', '#122C47');
+    renderRegister(reg);
+    renderActions();
+  }
+
+  /* ---------- Data dialog ---------- */
+  var dlg = document.getElementById('dataDlg'), fileIn = document.getElementById('fileIn'), pending = null;
+  function renderDsList(msgs) {
+    var list = document.getElementById('dsList'); list.textContent = '';
+    DATASETS.forEach(function (d) {
+      var row = el('div', { class: 'dsrow' });
+      var info = el('div'); info.appendChild(el('div', { class: 'nm' }, d.name + ' '));
+      info.appendChild(el('div', { class: 'ds' }, d.desc));
+      var src = state.source[d.id];
+      var s = el('div', { class: 'src' });
+      s.appendChild(chip(src.kind === 'yours' ? 'Your file' : 'Sample'));
+      if (src.kind === 'yours') { s.className = 'src'; s.firstChild.className = 'chip ok'; s.appendChild(document.createTextNode(' ' + src.name)); }
+      else s.firstChild.className = 'chip neutral';
+      if (msgs && msgs[d.id]) { var m = el('div', { style: 'color:' + (msgs[d.id].ok ? '#1f7a4d' : '#b42318') + ';font-size:.8rem;margin-top:4px' }, msgs[d.id].text); s.appendChild(m); }
+      info.appendChild(s);
+      var acts = el('div', { class: 'acts' });
+      var tpl = el('button', { type: 'button' }, 'Template'); tpl.addEventListener('click', function () { var p = parseCSV(SAMPLE[d.id]); download(d.file, toCSV(p.columns, p.rows)); });
+      var ld = el('button', { type: 'button', class: 'primary' }, 'Load'); ld.addEventListener('click', function () { pending = d.id; fileIn.value = ''; fileIn.click(); });
+      acts.appendChild(tpl); acts.appendChild(ld);
+      if (src.kind === 'yours') { var rs = el('button', { type: 'button' }, 'Use sample'); rs.addEventListener('click', function () { resetDataset(d.id); loadAll(); renderAll(); renderDsList(); }); acts.appendChild(rs); }
+      row.appendChild(info); row.appendChild(acts); list.appendChild(row);
+    });
+  }
+  function ingest(files, forcedId) {
+    var msgs = {}, left = files.length;
+    if (!left) return;
+    Array.prototype.forEach.call(files, function (file) {
+      var ds = forcedId ? DATASETS.filter(function (d) { return d.id === forcedId; })[0]
+        : DATASETS.filter(function (d) { var n = file.name.toLowerCase(); return n === d.file || n.indexOf(d.file.replace('.csv', '')) === 0; })[0];
+      var reader = new FileReader();
+      reader.onload = function () {
+        if (!ds) {
+          msgs._unknown = true;
+          alert('Not sure which dataset "' + file.name + '" is. Use the Load button on the right row, or keep the template file name.');
+        } else {
+          var parsed = parseCSV(reader.result), err = validate(ds, parsed);
+          if (err) msgs[ds.id] = { ok: false, text: file.name + ': ' + err };
+          else { saveDataset(ds.id, file.name, reader.result); msgs[ds.id] = { ok: true, text: 'Loaded ' + parsed.rows.length + (parsed.rows.length === 1 ? ' row' : ' rows') + ' from ' + file.name + '.' }; }
+        }
+        if (--left === 0) { loadAll(); renderAll(); renderDsList(msgs); }
+      };
+      reader.readAsText(file);
+    });
+  }
+  document.getElementById('openData').addEventListener('click', function () { renderDsList(); if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); });
+  document.getElementById('closeDlg').addEventListener('click', function () { dlg.close ? dlg.close() : dlg.removeAttribute('open'); });
+  fileIn.addEventListener('change', function () { ingest(fileIn.files, pending); });
+  document.getElementById('resetAll').addEventListener('click', function () {
+    if (!confirm('Go back to the sample data? Your loaded files will be cleared from this browser.')) return;
+    DATASETS.forEach(function (d) { resetDataset(d.id); }); loadAll(); renderAll(); renderDsList();
+  });
+  var dz = document.getElementById('dropZone');
+  ['dragenter', 'dragover'].forEach(function (e) { dz.addEventListener(e, function (ev) { ev.preventDefault(); dz.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (e) { dz.addEventListener(e, function (ev) { ev.preventDefault(); dz.classList.remove('over'); }); });
+  dz.addEventListener('drop', function (ev) { ingest(ev.dataTransfer.files, null); });
+
+  document.getElementById('regSearch').addEventListener('input', function () { renderRegister(registerRows()); });
+  document.getElementById('regFilter').addEventListener('change', function () { renderRegister(registerRows()); });
+  document.getElementById('regExport').addEventListener('click', function () {
+    var reg = registerRows(), cols = state.data.register.columns.filter(function (c) { return c !== 'review_status'; }).concat(['review_status']);
+    download('ai_register_with_review_status.csv', toCSV(cols, reg));
+  });
+  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { renderEditChart(); ['complaints_accuracy', 'near_misses', 'shadow_ai_found', 'breaches'].forEach(function (f, i) { renderMini(f, i === 0 ? '#b42318' : '#122C47'); }); }, 150); });
+  window.addEventListener('beforeprint', function () { renderEditChart(); });
+
+  loadAll();
+  renderAll();
+})();
+</script>
+</body>
+</html>
