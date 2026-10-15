@@ -36,7 +36,9 @@ Files are read in your browser only. Nothing is uploaded or sent anywhere. Loade
 | `ai_register.csv` | system, service, risk_tier, owner, next_review, dpia, supplier_evidence |
 | `edit_rates.csv` | period, team, edit_rate |
 | `incidents.csv` | period, complaints_accuracy, near_misses, breaches, shadow_ai_found |
-| `actions.csv` | ref, action, finding, owner, due, status |
+| `actions.csv` | ref, action, finding, owner, due, status, threshold (optional) |
+| `fairness.csv` (optional) | period, group_type, group, edit_rate, complaints, outputs_reviewed. Include an `Overall` row per period. Groups are flagged at 5 points above overall, unless fewer than 30 outputs. |
+| `resident_contact.csv` (optional) | period, ai_decision_appeals, ai_decisions_overturned, subject_access_requests_ai |
 
 ## Sample data
 

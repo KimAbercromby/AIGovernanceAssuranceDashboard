@@ -146,6 +146,12 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
     </div>
   </section>
 
+  <section id="fairness">
+    <h2>Outcomes by group</h2>
+    <p class="sub">Staff edit rates split by group, so an overall average cannot hide a gap. Groups are flagged when they sit well above the overall rate. Load this only where the data is collected lawfully and proportionately, with an equality impact assessment behind it.</p>
+    <div class="card"><h3>Edit rate by group, latest period</h3><div id="fairBody"></div></div>
+  </section>
+
   <section id="incidents">
     <h2>Incidents and early warnings</h2>
     <p class="sub">Read these together. Rising near misses and shadow AI finds usually mean people are reporting and detection is working. Breaches are the measure that should fall.</p>
@@ -154,6 +160,7 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
       <div class="card"><h3>Near misses reported</h3><p class="note">Caught before harm. Up is healthy.</p><div class="mini" id="m_near_misses"></div></div>
       <div class="card"><h3>Shadow AI tools found</h3><p class="note">Unapproved tools detected. Up shows detection works.</p><div class="mini" id="m_shadow_ai_found"></div></div>
       <div class="card"><h3>Data breaches involving AI</h3><p class="note">Reported to the DPO. Should trend to zero.</p><div class="mini" id="m_breaches"></div></div>
+      <div class="card"><h3>Resident contact about AI decisions</h3><p class="note">Appeals, overturned decisions and subject access requests. Rising appeals can show residents are using their rights.</p><div class="tblwrap"><table id="resTable"></table></div></div>
     </div>
   </section>
 
@@ -199,7 +206,7 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
 <dialog id="dataDlg" aria-labelledby="dlgTitle">
   <div class="dh"><h2 id="dlgTitle">Load your data</h2><button type="button" id="closeDlg">Close</button></div>
   <div class="db">
-    <p style="margin-top:0">The dashboard reads five CSV files. Download a template, fill it in (Excel or Google Sheets, saved as CSV), then load it here. You can drop several files at once if they keep the template file names.</p>
+    <p style="margin-top:0">The dashboard reads up to seven CSV files. The first five are the core data; the outcomes-by-group and resident contact files are optional, and their panels say so when empty. Download a template, fill it in (Excel or Google Sheets, saved as CSV), then load it here. You can drop several files at once if they keep the template file names.</p>
     <div class="drop" id="dropZone">Drop CSV files here, or use <b>Load</b> on each row.</div>
     <div id="dsList"></div>
     <p style="margin-bottom:0"><button type="button" id="resetAll">Reset to sample data</button></p>
@@ -242,12 +249,27 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
       'Q4 2025,Customer Services,4.8\nQ1 2026,Customer Services,4.9\nQ2 2026,Customer Services,4.6\nQ3 2026,Customer Services,4.5\n',
     incidents: 'period,complaints_accuracy,near_misses,breaches,shadow_ai_found\n' +
       'Q4 2025,5,2,1,1\nQ1 2026,6,4,1,3\nQ2 2026,6,7,0,4\nQ3 2026,12,9,0,7\n',
-    actions: 'ref,action,finding,owner,due,status\n' +
-      'A1,Make human review mandatory for all Housing call summaries,Housing edit rate 18% against a 5% tolerance; accuracy complaints doubled,Head of Customer Services,2026-10-31,In progress\n' +
-      'A2,Add staff edit rate as a standing KPI for every generative AI tool,Edit rate is the earliest warning of accuracy drift,AI Governance Lead,2026-11-30,Not started\n' +
-      'A3,Require supplier accuracy testing on distressed-caller samples before the model update goes live,Supplier has announced a model update; other councils report similar errors,Procurement and Contracts Lead,2026-11-15,Not started\n' +
-      'A4,Send automatic reminders to owners 60 days before reviews fall due,3 of 12 systems overdue annual review,AI Governance Lead,2026-10-24,Done\n' +
-      'A5,Report findings to the Information Governance Board with a risk rating,Quarterly assurance review cycle,AI Governance Lead,2026-11-05,In progress\n'
+    fairness: 'period,group_type,group,edit_rate,complaints,outputs_reviewed\n' +
+      'Q2 2026,Overall,All AI outputs,9.8,6,1840\n' +
+      'Q2 2026,Age band,Under 65,8.9,2,1210\n' +
+      'Q2 2026,Age band,65 and over,11.9,4,630\n' +
+      'Q2 2026,Disability reported,Yes,13.4,4,310\n' +
+      'Q2 2026,Disability reported,No,8.7,2,1530\n' +
+      'Q3 2026,Overall,All AI outputs,11.6,12,1950\n' +
+      'Q3 2026,Age band,Under 65,9.9,4,1260\n' +
+      'Q3 2026,Age band,65 and over,17.2,8,690\n' +
+      'Q3 2026,Disability reported,Yes,18.1,6,330\n' +
+      'Q3 2026,Disability reported,No,9.5,6,1620\n' +
+      'Q3 2026,Preferred language,English,10.4,7,1790\n' +
+      'Q3 2026,Preferred language,Other,14.6,3,22\n',
+    resident_contact: 'period,ai_decision_appeals,ai_decisions_overturned,subject_access_requests_ai\n' +
+      'Q4 2025,3,1,2\nQ1 2026,4,1,3\nQ2 2026,5,2,3\nQ3 2026,9,4,6\n',
+    actions: 'ref,action,finding,owner,due,status,threshold\n' +
+      'A1,Make human review mandatory for all Housing call summaries,Housing edit rate 18% against a 5% tolerance; accuracy complaints doubled,Head of Customer Services,2026-10-31,In progress,Edit rate above 5% tolerance\n' +
+      'A2,Add staff edit rate as a standing KPI for every generative AI tool,Edit rate is the earliest warning of accuracy drift,AI Governance Lead,2026-11-30,Not started,Any tool without edit rate tracking\n' +
+      'A3,Require supplier accuracy testing on distressed-caller samples before the model update goes live,Supplier has announced a model update; other councils report similar errors,Procurement and Contracts Lead,2026-11-15,Not started,Model update released without accuracy test\n' +
+      'A4,Send automatic reminders to owners 60 days before reviews fall due,3 of 12 systems overdue annual review,AI Governance Lead,2026-10-24,Done,More than 3 reviews overdue\n' +
+      'A5,Report findings to the Information Governance Board with a risk rating,Quarterly assurance review cycle,AI Governance Lead,2026-11-05,In progress,Quarterly review not reported to Board\n'
   };
 
   var DATASETS = [
@@ -259,9 +281,15 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
       required: ['period', 'team', 'edit_rate'] },
     { id: 'incidents', file: 'incidents.csv', name: 'Incidents by period', desc: 'One row per period: accuracy complaints, near misses, breaches, shadow AI finds.',
       required: ['period', 'complaints_accuracy', 'near_misses', 'breaches', 'shadow_ai_found'] },
-    { id: 'actions', file: 'actions.csv', name: 'Board action log', desc: 'One row per action: ref, action, finding, owner, due date, status.',
+    { id: 'fairness', file: 'fairness.csv', name: 'Outcomes by group (optional)', desc: 'One row per period and group: edit rate, complaints and outputs reviewed, with an Overall row for comparison. Load only where collecting this data has a documented lawful basis and an equality impact assessment.',
+      required: ['period', 'group_type', 'group', 'edit_rate'] },
+    { id: 'resident_contact', file: 'resident_contact.csv', name: 'Resident contact about AI decisions (optional)', desc: 'One row per period: appeals against AI-supported decisions, decisions overturned, and subject access requests about AI.',
+      required: ['period', 'ai_decision_appeals', 'subject_access_requests_ai'] },
+    { id: 'actions', file: 'actions.csv', name: 'Board action log', desc: 'One row per action: ref, action, finding, owner, due date, status. Optional threshold column names the threshold breached.',
       required: ['ref', 'action', 'finding', 'owner', 'due', 'status'] }
   ];
+  var FAIRNESS_GAP_PTS = 5;   /* flag a group whose edit rate is this many points above Overall */
+  var SMALL_SAMPLE = 30;      /* below this many outputs, don't flag: too few to read */
 
   var STORE_KEY = 'aiAssuranceDashboard.v1';
   var DUE_SOON_DAYS = 60;
@@ -614,7 +642,9 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
   }
   function renderActions() {
     var tbl = document.getElementById('actTable'); tbl.textContent = '';
-    var cols = [{ k: 'ref', h: 'Ref' }, { k: 'action', h: 'Action' }, { k: 'finding', h: 'Finding', narrow: true }, { k: 'owner', h: 'Owner' }, { k: 'due', h: 'Due' }, { k: 'status', h: 'Status' }];
+    var cols = [{ k: 'ref', h: 'Ref' }, { k: 'action', h: 'Action' }, { k: 'finding', h: 'Finding', narrow: true }];
+    if (state.data.actions.columns.indexOf('threshold') !== -1) cols.push({ k: 'threshold', h: 'Threshold breached', narrow: true });
+    cols = cols.concat([{ k: 'owner', h: 'Owner' }, { k: 'due', h: 'Due' }, { k: 'status', h: 'Status' }]);
     var thead = el('thead'), tr = el('tr');
     cols.forEach(function (c) { tr.appendChild(el('th', { scope: 'col', class: c.narrow ? 'hide-narrow' : '' }, c.h)); });
     thead.appendChild(tr); tbl.appendChild(thead);
@@ -635,6 +665,68 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
     tbl.appendChild(tb);
   }
 
+  /* ---------- Render: outcomes by group ---------- */
+  function latestPeriod(rows) {
+    var ps = []; rows.forEach(function (r) { if (ps.indexOf(r.period) === -1) ps.push(r.period); });
+    return ps[ps.length - 1];
+  }
+  function renderFairness() {
+    var host = document.getElementById('fairBody'); host.textContent = '';
+    var rows = state.data.fairness ? state.data.fairness.rows : [];
+    if (!rows.length) { host.appendChild(el('div', { class: 'empty' }, 'No group data loaded. Use Load your data to add a fairness file, or leave this panel empty until the data is lawfully available.')); return; }
+    var last = latestPeriod(rows);
+    var cur = rows.filter(function (r) { return r.period === last; });
+    var overall = cur.filter(function (r) { return r.group_type === 'Overall'; })[0];
+    var base = overall ? num(overall.edit_rate) : null;
+    host.appendChild(el('p', { class: 'note' }, 'Latest period: ' + last + '. Overall edit rate ' + (base == null ? '–' : fmt(base) + '%') + '.'));
+    var cols = ['Characteristic', 'Group', 'Edit rate', 'vs overall', 'Outputs reviewed', 'Result'];
+    var tbl = el('table'), thead = el('thead'), htr = el('tr');
+    cols.forEach(function (c) { htr.appendChild(el('th', { scope: 'col' }, c)); });
+    thead.appendChild(htr); tbl.appendChild(thead);
+    var tb = el('tbody'), flagged = 0;
+    cur.filter(function (r) { return r.group_type !== 'Overall'; }).forEach(function (r) {
+      var v = num(r.edit_rate), n = num(r.outputs_reviewed), gap = (v != null && base != null) ? Math.round((v - base) * 10) / 10 : null;
+      var result, chipCls;
+      if (n != null && n < SMALL_SAMPLE) { result = 'Small sample'; chipCls = 'neutral'; }
+      else if (gap != null && gap >= FAIRNESS_GAP_PTS) { result = 'Review'; chipCls = 'bad'; flagged++; }
+      else { result = 'Within range'; chipCls = 'ok'; }
+      var tr = el('tr');
+      tr.appendChild(el('td', { class: 'key' }, r.group_type));
+      tr.appendChild(el('td', null, r.group));
+      tr.appendChild(el('td', null, v == null ? '–' : fmt(v) + '%'));
+      tr.appendChild(el('td', null, gap == null ? '–' : (gap > 0 ? '+' : '') + fmt(gap) + ' pts'));
+      tr.appendChild(el('td', null, n == null ? '–' : String(n)));
+      var rtd = el('td'); rtd.appendChild(el('span', { class: 'chip ' + chipCls }, result)); tr.appendChild(rtd);
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);
+    var wrap = el('div', { class: 'tblwrap' }); wrap.appendChild(tbl); host.appendChild(wrap);
+    host.appendChild(el('p', { class: 'note' }, flagged
+      ? flagged + ' group' + (flagged > 1 ? 's' : '') + ' flagged for review. A flag starts a conversation with the service owner; it is not a finding of bias.'
+      : 'No group is more than ' + FAIRNESS_GAP_PTS + ' points above overall. Groups with fewer than ' + SMALL_SAMPLE + ' outputs are not judged.'));
+  }
+
+  /* ---------- Render: resident contact about AI decisions ---------- */
+  function renderResident() {
+    var tbl = document.getElementById('resTable'); tbl.textContent = '';
+    var rows = state.data.resident_contact ? state.data.resident_contact.rows : [];
+    var cols = ['Period', 'Appeals', 'Overturned', 'Subject access requests'];
+    var thead = el('thead'), htr = el('tr');
+    cols.forEach(function (c) { htr.appendChild(el('th', { scope: 'col' }, c)); });
+    thead.appendChild(htr); tbl.appendChild(thead);
+    var tb = el('tbody');
+    rows.forEach(function (r) {
+      var tr = el('tr');
+      tr.appendChild(el('td', { class: 'key' }, r.period));
+      tr.appendChild(el('td', null, r.ai_decision_appeals || '–'));
+      tr.appendChild(el('td', null, r.ai_decisions_overturned || '–'));
+      tr.appendChild(el('td', null, r.subject_access_requests_ai || '–'));
+      tb.appendChild(tr);
+    });
+    if (!rows.length) { var etr = el('tr'); etr.appendChild(el('td', { colspan: cols.length, class: 'empty' }, 'No resident contact data loaded.')); tb.appendChild(etr); }
+    tbl.appendChild(tb);
+  }
+
   function renderAll() {
     var reg = registerRows();
     renderHeader(reg);
@@ -644,6 +736,8 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
     renderMini('near_misses', '#122C47');
     renderMini('shadow_ai_found', '#122C47');
     renderMini('breaches', '#122C47');
+    renderFairness();
+    renderResident();
     renderRegister(reg);
     renderActions();
   }
