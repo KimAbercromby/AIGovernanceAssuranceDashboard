@@ -323,7 +323,7 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
   }
   function csvCell(v) {
     v = v == null ? '' : String(v);
-    if (/^[=+\-@]/.test(v)) v = "'" + v;
+    if (/^[=+\-@]/.test(v) && !/^[-+]?\d+(\.\d+)?%?$/.test(v)) v = "'" + v;
     return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
   }
   function toCSV(cols, rows) {
