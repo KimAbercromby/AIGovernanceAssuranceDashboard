@@ -24,6 +24,8 @@ a { color: var(--navy); }
 button, .btn { font: inherit; font-size: .85rem; border-radius: 6px; padding: 7px 12px; cursor: pointer; border: 1px solid var(--line); background: #fff; color: var(--navy); }
 .topbar button { background: transparent; color: #fff; border-color: rgba(255,255,255,.45); }
 .topbar button:hover { border-color: var(--gold); color: var(--gold); }
+.topbar a.btnlink { display: inline-block; text-decoration: none; color: #fff; border: 1px solid rgba(255,255,255,.45); border-radius: 6px; padding: 7px 12px; font-size: .85rem; line-height: normal; }
+.topbar a.btnlink:hover { border-color: var(--gold); color: var(--gold); }
 button.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
 main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
 .take { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--gold); border-radius: var(--radius); padding: 14px 18px; margin: 20px 0 6px; font-size: 1.02rem; }
@@ -132,6 +134,7 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
     </div>
     <div class="btns">
       <button type="button" id="openData">Load your data</button>
+      <a class="btnlink" href="power-bi-copilot.html">Power BI and Copilot</a>
       <button type="button" id="printBtn">Print Board report</button>
     </div>
   </div>
@@ -219,6 +222,7 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
   <div class="dh"><h2 id="dlgTitle">Load your data</h2><button type="button" id="closeDlg">Close</button></div>
   <div class="db">
     <p style="margin-top:0">The dashboard reads up to seven CSV files. The first five are the core data; the outcomes-by-group and resident contact files are optional, and their panels say so when empty. Download a template, fill it in (Excel or Google Sheets, saved as CSV), then load it here. You can drop several files at once if they keep the template file names.</p>
+    <p class="note" style="margin:0 0 10px">Running this for real? See <a href="power-bi-copilot.html">how to rebuild it in Power BI and use it with Copilot</a>.</p>
     <div class="drop" id="dropZone">Drop CSV files here, or use <b>Load</b> on each row.</div>
     <div id="dsList"></div>
     <p style="margin-bottom:0"><button type="button" id="resetAll">Reset to sample data</button></p>

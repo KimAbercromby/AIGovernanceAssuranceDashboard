@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Using this dashboard with Power BI and Copilot</title>
+<style>
+:root {
+  --navy: #122C47; --gold: #C8AB36; --ink: #1d2733; --muted: #5b6878; --line: #dde3ea;
+  --bg: #f4f6f9; --panel: #fff; --radius: 10px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.55; }
+.topbar { background: var(--navy); color: #fff; border-bottom: 4px solid var(--gold); }
+.topbar .in, main { max-width: 980px; margin: 0 auto; padding: 18px 24px; }
+.topbar .kicker { font-size: .78rem; text-transform: uppercase; letter-spacing: .1em; color: var(--gold); margin: 0 0 4px; }
+.topbar h1 { margin: 0; font-size: 1.6rem; }
+.topbar a { color: #fff; font-size: .9rem; }
+main { padding-bottom: 40px; }
+.lead { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--gold); border-radius: var(--radius); padding: 14px 18px; margin: 22px 0 6px; font-size: 1.02rem; }
+h2 { font-size: 1.15rem; color: var(--navy); margin: 30px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--gold); display: inline-block; }
+h3 { font-size: 1rem; color: var(--navy); margin: 18px 0 6px; }
+.roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+.role { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.role .tag { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.role h3 { margin: 4px 0 6px; }
+.role p { margin: 0; font-size: .92rem; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; font-size: .9rem; }
+th { background: var(--navy); color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; }
+td { padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+code, pre { font-family: Consolas, "Courier New", monospace; }
+td code { font-size: .85rem; background: #f1f4f8; padding: 1px 4px; border-radius: 4px; }
+pre { background: #0f2238; color: #e9eef5; border-radius: 8px; padding: 12px 14px; font-size: .82rem; overflow-x: auto; white-space: pre; margin: 6px 0 12px; }
+.prompt { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--navy); border-radius: 8px; padding: 10px 14px; margin: 8px 0; font-size: .93rem; }
+.prompt b { color: var(--navy); }
+.note { color: var(--muted); font-size: .88rem; }
+.caution { background: #fdf3e2; border: 1px solid #f0d49b; color: #4a3b00; border-radius: var(--radius); padding: 12px 16px; margin: 12px 0; font-size: .93rem; }
+ul { padding-left: 20px; }
+li { margin: 4px 0; }
+footer { max-width: 980px; margin: 0 auto; padding: 0 24px 30px; color: var(--muted); font-size: .85rem; }
+@media (max-width: 760px) { .roles { grid-template-columns: 1fr; } }
+@media print {
+  body { background: #fff; }
+  .topbar { background: #fff; color: var(--navy); }
+  .topbar a { display: none; }
+  pre { background: #f1f4f8; color: var(--ink); }
+  h2, h3 { break-after: avoid; }
+  .prompt, tr, pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="in">
+    <p class="kicker">AI assurance dashboard · guide</p>
+    <h1>Using this dashboard with Power BI and Copilot</h1>
+    <p style="margin:8px 0 0"><a href="./">&larr; Back to the dashboard</a></p>
+  </div>
+</header>
+
+<main>
+  <div class="lead">
+    This dashboard is a <b>blueprint for AI assurance reporting</b>, not a replacement for a business intelligence platform. It sets out what a Board should see to answer “is AI governance working?”: the measures, the targets, and the rules for reading them. Most organisations already have the tools to run it for real. This page shows how to rebuild it in <b>Power BI</b> and how to use <b>Microsoft Copilot</b> alongside it.
+  </div>
+
+  <h2>How the three fit together</h2>
+  <div class="roles">
+    <div class="role">
+      <span class="tag">Defines</span>
+      <h3>This dashboard</h3>
+      <p>Fixes the eight assurance measures, their targets and the rules for reading them, so the Board sees the same thing, worked out the same way, every quarter. Use it to agree the content before anyone builds anything.</p>
+    </div>
+    <div class="role">
+      <span class="tag">Runs</span>
+      <h3>Power BI</h3>
+      <p>Rebuilds the same view on your own data platform, refreshed on a schedule, with your access controls and sharing. The dashboard’s CSV files become tables fed from your source systems.</p>
+    </div>
+    <div class="role">
+      <span class="tag">Explores</span>
+      <h3>Copilot</h3>
+      <p>Answers the follow-up questions (“why is the Housing edit rate up?”) and drafts the narrative for the Board paper. It works best when you give it the dashboard’s definitions, as in the prompts below.</p>
+    </div>
+  </div>
+
+  <h2>Why not just ask Copilot?</h2>
+  <p>Copilot is good at one-off questions and at drafting. On its own it does not know which measures make up AI assurance, what the targets are, or when a sample is too small to judge, and it can give a slightly different answer each time it is asked. Board assurance needs <b>fixed definitions</b>, so a trend means something from one quarter to the next and an auditor can check how each figure was produced. The dashboard supplies those definitions; Power BI applies them the same way every time; Copilot helps people understand the result.</p>
+
+  <h2>Rebuild it in Power BI</h2>
+  <h3>1. One table per file</h3>
+  <p>Each CSV file the dashboard loads becomes a table in Power BI. Keep the same column names: they are the agreed definitions, and the dashboard’s <b>Template</b> buttons give you the exact headers.</p>
+  <table>
+    <thead><tr><th>Dashboard file</th><th>What it holds</th><th>Typical source in your organisation</th></tr></thead>
+    <tbody>
+      <tr><td><code>assurance_kpis.csv</code></td><td>The eight scorecard measures: this period, previous period, target, unit, and whether higher or lower is better</td><td>The quarterly assurance return, or measures calculated from the tables below</td></tr>
+      <tr><td><code>ai_register.csv</code></td><td>One row per AI system: service, risk tier, owner, next review date, DPIA status, supplier evidence status</td><td>The AI register (for example a SharePoint list or the register workbook)</td></tr>
+      <tr><td><code>edit_rates.csv</code></td><td>Share of AI outputs staff edited, by period and team</td><td>Logs from the AI tool or its service platform</td></tr>
+      <tr><td><code>incidents.csv</code></td><td>Accuracy complaints, near misses, breaches and shadow AI finds, by period</td><td>Incident, complaints and information governance logs</td></tr>
+      <tr><td><code>fairness.csv</code> (optional)</td><td>Edit rate, complaints and outputs reviewed by group, with an Overall row</td><td>Only where collecting this data has a documented lawful basis</td></tr>
+      <tr><td><code>resident_contact.csv</code> (optional)</td><td>Appeals against AI-supported decisions, decisions overturned, subject access requests about AI</td><td>Complaints and information rights logs</td></tr>
+      <tr><td><code>actions.csv</code></td><td>The Board action log: ref, action, finding, owner, due date, status</td><td>The Board’s action log</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2. Carry the rules over exactly</h3>
+  <p>These are the rules the dashboard applies. Written as Power BI calculated columns and measures, they give the same answers the dashboard does. Table names here match the files above; rename them to suit your model.</p>
+
+  <p><b>Is a measure on target?</b> The scorecard says whether higher or lower is better for each measure.</p>
+<pre>On target =
+IF (
+    'Assurance KPIs'[better] = "lower",
+    'Assurance KPIs'[value] &lt;= 'Assurance KPIs'[target],
+    'Assurance KPIs'[value] &gt;= 'Assurance KPIs'[target]
+)</pre>
+
+  <p><b>Review status of each AI system.</b> Overdue once the review date has passed; Due soon within 60 days.</p>
+<pre>Review status =
+VAR DaysLeft = DATEDIFF ( TODAY (), 'AI register'[next_review], DAY )
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ( 'AI register'[next_review] ), "No date",
+        DaysLeft &lt; 0, "Overdue",
+        DaysLeft &lt;= 60, "Due soon",
+        "On track"
+    )</pre>
+
+  <p><b>Check the scorecard against the register.</b> The dashboard recalculates three measures from the register and warns when the reported figure differs by more than one percentage point. In Power BI, the same three figures come straight from the register:</p>
+<pre>Reviews not overdue % =
+DIVIDE (
+    COUNTROWS ( FILTER ( 'AI register', 'AI register'[Review status] &lt;&gt; "Overdue" ) ),
+    COUNTROWS ( 'AI register' )
+) * 100
+
+High-risk with signed-off DPIA % =
+VAR HighRisk =
+    FILTER ( 'AI register', 'AI register'[risk_tier] IN { "High", "Critical" } )
+RETURN
+    DIVIDE (
+        COUNTROWS ( FILTER ( HighRisk, CONTAINSSTRING ( 'AI register'[dpia], "signed" ) ) ),
+        COUNTROWS ( HighRisk )
+    ) * 100
+
+Suppliers with current evidence % =
+DIVIDE (
+    COUNTROWS ( FILTER ( 'AI register', CONTAINSSTRING ( 'AI register'[supplier_evidence], "current" ) ) ),
+    COUNTROWS ( 'AI register' )
+) * 100</pre>
+  <p class="note">Once the scorecard is calculated from the register like this, the figures cannot drift apart, which is better than checking them afterwards.</p>
+
+  <p><b>Edit rate tolerance.</b> The tolerance line on the performance chart is the target of the <code>edit_rate</code> measure in the scorecard. Draw it as a constant line from that measure rather than typing a number into the chart.</p>
+
+  <p><b>Outcomes by group.</b> Flag a group whose edit rate is <b>5 or more percentage points</b> above the Overall row for the same period. Do not judge a group with fewer than <b>30</b> outputs reviewed: show it as “Small sample” instead.</p>
+
+  <h3>3. Keep the Board view the same</h3>
+  <ul>
+    <li>Keep the one-line summary at the top: how many measures are off target, how many systems are overdue review, and the biggest performance risk.</li>
+    <li>Flag only a missed target in red. A change against the previous period is shown, not judged.</li>
+    <li>Keep the action log on the same page as the findings, so every red item has an owner and a date.</li>
+  </ul>
+
+  <h2>Use it with Copilot</h2>
+  <p>Copilot gives consistent, checkable answers when you tell it the definitions. These prompts work on the dashboard’s files, or on the same tables in Excel or Power BI. In Excel, format each sheet as a table first.</p>
+
+  <div class="prompt"><b>Overdue reviews.</b> “Using the AI register table, list every system whose next_review date is before today. Group them by service and show the owner and risk tier. Put High and Critical systems first.”</div>
+  <div class="prompt"><b>Missed targets.</b> “In the assurance KPIs table, a measure is on target when value is at least target where better is ‘higher’, or at most target where better is ‘lower’. List the measures that are off target, with this period, the previous period and the target.”</div>
+  <div class="prompt"><b>Where the AI is least reliable.</b> “In the edit rates table, find the team with the highest edit_rate in the latest period, and how it changed from the previous period. Compare it with a tolerance of [the edit_rate target from the scorecard]%.”</div>
+  <div class="prompt"><b>Fairness check.</b> “In the fairness table, for the latest period, list any group whose edit_rate is 5 or more percentage points above the Overall row. Leave out groups with fewer than 30 outputs reviewed, and say which groups you left out.”</div>
+  <div class="prompt"><b>Board narrative.</b> “Using only these tables, write a short summary for the AI Assurance Board: how many measures are off target, which systems are overdue review, the biggest performance risk, and which actions are late. Do not add figures that are not in the tables.”</div>
+  <div class="prompt"><b>Follow-up question.</b> “The Housing edit rate rose this period. Using the incidents and edit rates tables, what else changed in the same period that might explain it? Say what the data cannot tell us.”</div>
+
+  <div class="caution">
+    <b>Before you use Copilot on real data.</b> Use only your organisation’s approved Copilot, under its own data protection terms. Keep resident-level and special category data out of prompts: these tables are summaries for a reason. Treat Copilot’s answer as a draft. The figures that go to the Board come from the fixed definitions above, and someone accountable checks the narrative before it is circulated.
+  </div>
+
+  <h2>What stays with people</h2>
+  <ul>
+    <li>Agreeing the measures and targets, and changing them through governance rather than in a report.</li>
+    <li>Owning the source data, and its quality, for each table.</li>
+    <li>Deciding what a red result means and what action to take. A dashboard, Power BI report or Copilot answer informs that decision; it does not make it.</li>
+  </ul>
+</main>
+
+<footer>
+  Proposed draft for review. The dashboard and this guide are illustrative working aids, not approved Council tools. Product capabilities depend on your organisation’s licences and settings; check with your data and IT teams before building.
+</footer>
+</body>
+</html>

@@ -47,3 +47,7 @@ The built-in data is illustrative, for a fictional local authority. It is not re
 ## Running it
 
 It is one self-contained `index.html` with no dependencies. Open it in a browser, or host it with GitHub Pages (Settings → Pages → Deploy from branch → `main`, root).
+
+## Power BI and Copilot
+
+`power-bi-copilot.html` explains how this dashboard relates to an organisation's own tools: it is the blueprint (measures, targets and rules), Power BI is where it would run on live data, and Copilot helps explore it. It maps each CSV file to a Power BI table, gives the dashboard's rules as Power BI formulas, and offers Copilot prompts that use the same definitions. It is linked from the dashboard header and the Load your data dialog.
