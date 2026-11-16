@@ -47,6 +47,7 @@ footer { max-width: 980px; margin: 0 auto; padding: 0 24px 30px; color: var(--mu
   h2, h3 { break-after: avoid; }
   .prompt, tr, pre { break-inside: avoid; }
 }
+@media (max-width: 480px) { th, td { padding: 6px 6px; } table { font-size: .8rem; } td code { font-size: .74rem; word-break: break-word; } }
 </style>
 </head>
 <body>
@@ -91,13 +92,13 @@ footer { max-width: 980px; margin: 0 auto; padding: 0 24px 30px; color: var(--mu
   <table>
     <thead><tr><th>Dashboard file</th><th>What it holds</th><th>Typical source in your organisation</th></tr></thead>
     <tbody>
-      <tr><td><code>assurance_kpis.csv</code></td><td>The eight scorecard measures: this period, previous period, target, unit, and whether higher or lower is better</td><td>The quarterly assurance return, or measures calculated from the tables below</td></tr>
-      <tr><td><code>ai_register.csv</code></td><td>One row per AI system: service, risk tier, owner, next review date, DPIA status, supplier evidence status</td><td>The AI register (for example a SharePoint list or the register workbook)</td></tr>
-      <tr><td><code>edit_rates.csv</code></td><td>Share of AI outputs staff edited, by period and team</td><td>Logs from the AI tool or its service platform</td></tr>
-      <tr><td><code>incidents.csv</code></td><td>Accuracy complaints, near misses, breaches and shadow AI finds, by period</td><td>Incident, complaints and information governance logs</td></tr>
-      <tr><td><code>fairness.csv</code> (optional)</td><td>Edit rate, complaints and outputs reviewed by group, with an Overall row</td><td>Only where collecting this data has a documented lawful basis</td></tr>
-      <tr><td><code>resident_contact.csv</code> (optional)</td><td>Appeals against AI-supported decisions, decisions overturned, subject access requests about AI</td><td>Complaints and information rights logs</td></tr>
-      <tr><td><code>actions.csv</code></td><td>The Board action log: ref, action, finding, owner, due date, status</td><td>The Board’s action log</td></tr>
+      <tr><td><code>assurance_<wbr>kpis<wbr>.csv</code></td><td>The eight scorecard measures: this period, previous period, target, unit, and whether higher or lower is better</td><td>The quarterly assurance return, or measures calculated from the tables below</td></tr>
+      <tr><td><code>ai_<wbr>register<wbr>.csv</code></td><td>One row per AI system: service, risk tier, owner, next review date, DPIA status, supplier evidence status</td><td>The AI register (for example a SharePoint list or the register workbook)</td></tr>
+      <tr><td><code>edit_<wbr>rates<wbr>.csv</code></td><td>Share of AI outputs staff edited, by period and team</td><td>Logs from the AI tool or its service platform</td></tr>
+      <tr><td><code>incidents<wbr>.csv</code></td><td>Accuracy complaints, near misses, breaches and shadow AI finds, by period</td><td>Incident, complaints and information governance logs</td></tr>
+      <tr><td><code>fairness<wbr>.csv</code> (optional)</td><td>Edit rate, complaints and outputs reviewed by group, with an Overall row</td><td>Only where collecting this data has a documented lawful basis</td></tr>
+      <tr><td><code>resident_<wbr>contact<wbr>.csv</code> (optional)</td><td>Appeals against AI-supported decisions, decisions overturned, subject access requests about AI</td><td>Complaints and information rights logs</td></tr>
+      <tr><td><code>actions<wbr>.csv</code></td><td>The Board action log: ref, action, finding, owner, due date, status</td><td>The Board’s action log</td></tr>
     </tbody>
   </table>
 
