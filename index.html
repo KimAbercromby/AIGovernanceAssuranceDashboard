@@ -32,6 +32,16 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
 .banner.warn { display: block; background: var(--warn-bg); color: #6b4000; border: 1px solid #f0d49b; }
 .banner.info { display: block; background: #eef3f9; color: var(--navy); border: 1px solid #cdd9e7; }
 .banner ul { margin: 6px 0 0; padding-left: 20px; }
+/* Data source: make it impossible to mistake sample figures for a live feed */
+.srcpill { display: inline-block; vertical-align: middle; margin-left: 10px; padding: 2px 9px; border-radius: 999px; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.srcpill.sample { background: var(--gold); color: var(--navy); }
+.srcpill.mixed { background: #fdf3e2; color: #6b4000; }
+.srcpill.yours { background: #e8f5ee; color: #1d5b3a; }
+.banner.sample { margin-top: 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: #fff8e0; color: #4a3b00; border: 2px solid var(--gold); font-size: .95rem; }
+.banner.sample b { color: var(--navy); }
+.banner.sample button { margin-left: auto; background: var(--navy); color: #fff; border: 0; border-radius: 6px; padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+.banner.sample button:hover { background: #1c3d61; }
+.banner.yours { display: block; background: #e8f5ee; color: #1d5b3a; border: 1px solid #b9dcc7; }
 h2 { font-size: 1.15rem; color: var(--navy); margin: 30px 0 4px; padding-bottom: 4px; border-bottom: 2px solid var(--gold); display: inline-block; }
 .sub { color: var(--muted); font-size: .88rem; margin: 6px 0 12px; max-width: 60rem; }
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
@@ -95,6 +105,8 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
   .topbar { background: #fff; color: var(--navy); border-bottom: 3px solid var(--gold); }
   .topbar h1 { color: var(--navy); }
   .topbar .btns, .tblbar, .noprint, dialog { display: none !important; }
+  .banner.sample button { display: none !important; }
+  .banner.sample, .srcpill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   @page { size: A4 landscape; margin: 10mm; }
   .card { break-inside: avoid; padding: 10px; }
   #register .card, #actions .card { break-inside: auto; }
@@ -116,7 +128,7 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
   <div class="in">
     <div>
       <p class="kicker" id="periodLabel">Quarterly AI assurance review</p>
-      <h1>Is AI governance working?</h1>
+      <h1>Is AI governance working? <span class="srcpill sample" id="srcPill">Sample data</span></h1>
     </div>
     <div class="btns">
       <button type="button" id="openData">Load your data</button>
@@ -126,8 +138,8 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
 </header>
 
 <main>
-  <div class="take" id="takeaway">Loading…</div>
   <div class="banner" id="dataBanner"></div>
+  <div class="take" id="takeaway">Loading…</div>
   <div class="banner" id="checkBanner"></div>
 
   <section id="scorecard">
@@ -430,10 +442,27 @@ footer { max-width: 1180px; margin: 0 auto; padding: 0 16px 30px; color: var(--m
     // data source banner
     var mine = DATASETS.filter(function (d) { return state.source[d.id].kind === 'yours'; });
     var b = document.getElementById('dataBanner');
+    var pill = document.getElementById('srcPill');
     b.className = 'banner'; b.textContent = '';
-    if (mine.length && mine.length < DATASETS.length) {
-      b.className = 'banner info';
-      b.textContent = 'Mixed data: ' + mine.map(function (d) { return d.name; }).join(', ') + ' from your files; the rest is still sample data.';
+    if (!mine.length) {
+      // Everything on screen is the built-in sample: say so loudly, and show how to use real data.
+      pill.className = 'srcpill sample'; pill.textContent = 'Sample data';
+      b.className = 'banner sample';
+      var t = el('div', null);
+      t.appendChild(el('b', null, 'Sample data, not a live feed. '));
+      t.appendChild(document.createTextNode('Every figure on this page is illustrative, for a fictional council. To see your own position, load your CSV exports (register, controls, performance, incidents, suppliers) with Load your data. Files are read in your browser only; nothing is uploaded.'));
+      b.appendChild(t);
+      var lb = el('button', { type: 'button' }, 'Load your data');
+      lb.addEventListener('click', function () { document.getElementById('openData').click(); });
+      b.appendChild(lb);
+    } else if (mine.length < DATASETS.length) {
+      pill.className = 'srcpill mixed'; pill.textContent = 'Partly sample data';
+      b.className = 'banner warn';
+      b.textContent = 'Mixed data: ' + mine.map(function (d) { return d.name; }).join(', ') + ' from your files. Everything else on this page is still illustrative sample data, not your figures.';
+    } else {
+      pill.className = 'srcpill yours'; pill.textContent = 'Your data';
+      b.className = 'banner yours';
+      b.textContent = 'Showing your loaded files. This is a snapshot of the files you loaded, not a live feed: reload updated exports to refresh it.';
     }
     document.getElementById('footSrc').style.display = mine.length === DATASETS.length ? 'none' : '';
 
