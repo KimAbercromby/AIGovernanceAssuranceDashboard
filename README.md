@@ -1,6 +1,6 @@
 # AI Assurance Dashboard
 
-A quarterly AI assurance dashboard for a local authority. It answers one question for an Information Governance Board: **is AI governance working?**
+A quarterly AI assurance dashboard for a local authority. It answers one question for the AI Assurance Board: **is AI governance working?**
 
 It brings together the five kinds of assurance data:
 
